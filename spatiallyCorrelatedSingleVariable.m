@@ -3,7 +3,7 @@
 %     two variables are generated but the principle works 
 %     for any number of variables
 % DEPENDENCIES:
-%     surf_plot.m
+% 
 % RELATED SCRIPTS:
 %     steelfoam_rand_props.m
 % Date:
@@ -32,7 +32,7 @@ gamma = 50;  %Lx/nx;  %mm, spatial correl ation length
 
 calc_correl_flag = 1;  % if 1 then the correlation matrix is computed and saved,
 % if 0 then it is loaded from previuosly computed .mat variable
-infile = 'correlationMatrices';  %name of file with the variables
+infile = 'correlationMatrix';  %name of file with the variables
 
 % 'cholesky' is the fastest methods BUT it seems to work/succeed for
 % small correlation length(s) only, 'eigen' is second fasters, and 
