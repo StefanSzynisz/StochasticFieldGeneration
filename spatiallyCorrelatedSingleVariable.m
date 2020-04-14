@@ -3,7 +3,7 @@
 %     two variables are generated but the principle works 
 %     for any number of variables
 % DEPENDENCIES:
-% 
+%     surf_plot.m
 % RELATED SCRIPTS:
 %     steelfoam_rand_props.m
 % Date:
@@ -86,18 +86,18 @@ if calc_correl_flag == 1
     
     % 1) Compute the centroids of the elements first such that we can compute
     % the distance between the elements in the next step:
-    [coordX, coordY] = elemCoordVector(Lx,Ly,nx,ny,precision_flag);
-    
+    coordCentroids = elemCoordVector(Lx,Ly,nx,ny,precision_flag);
+
     % 2) using centroid coordinates of each element, compute the correlation 
     % matrix based on distance between each element and spatial correlation
     % parameter, gamma:
     if sparse_flag==1
-        K = correlMatrix(coordX, coordY, gamma,'sparse',precision_flag);  % 'sparse' matrix is generated
+        K = correlMatrix(coordCentroids, gamma,'sparse',precision_flag);  % 'sparse' matrix is generated
         figure(1);
         spy(K); % show the sparsity of the correlation matrix
         title('Sparsity of K');
     else
-        K = correlMatrix(coordX, coordY, gamma,'full',precision_flag);  % 'full' matrix is generated
+        K = correlMatrix(coordCentroids, gamma,'full',precision_flag);  % 'full' matrix is generated
         disp('Correlation matrix, K was succesfully assembled.');
     end
     
@@ -154,7 +154,7 @@ if calc_correl_flag == 1
     end
 
     %save correlation matrix if instructed to do so.
-    save(strcat(infile,'_',decomposition_flag),'B','coordX', 'coordY','-v7.3');
+    save(strcat(infile,'_',decomposition_flag),'B','coordCentroids','-v7.3');
     
 elseif calc_correl_flag == 0
     %load correlation matrices from a file named infile_svd if
@@ -193,7 +193,7 @@ if plot_flag == 1
     plotTitle = strcat('Random Variable--Correl-lenght--',' ',num2str(gamma),'mm');
     figure(3); left_pos = 3; bott_pos = 12; %cm
     % double() precisin for plotting:
-    surfPlot(double(coordX),double(coordY),double(variableRand), plotTitle,'', ...
+    surfPlot(double(coordCentroids(:,1)),double(coordCentroids(:,2)),double(variableRand), plotTitle,'', ...
         saveDataPath,double(resolution),left_pos,bott_pos, ...
         double(min_Var), double(max_Var), 'colorbar_on');
 end
@@ -206,8 +206,8 @@ save(dataFileName,'variableRand', '-v7.3');
 %% FUNCTIONS:
 %============
 
-function matrixK = correlMatrix(coordX, coordY, gamma,sparse_flag,precision_flag)
-    n_elements = size(coordX,1);
+function matrixK = correlMatrix(coordCentroids, gamma,sparse_flag,precision_flag)
+    n_elements = size(coordCentroids,1);
     % Correlation matrix (Turn-off when not enough memory):
     if strcmp(sparse_flag,'sparse') % if the flag is on, then use sparse matrix
         matrixK = sparse(n_elements,n_elements);
@@ -221,7 +221,9 @@ function matrixK = correlMatrix(coordX, coordY, gamma,sparse_flag,precision_flag
     
     h1 = waitbar(0,'Correlation matrix | Overal progress');
     set(h1, 'Units', 'centimeters', 'Position', [15 15 10 2]);
-    for i=1:n_elements
+    % it is a symmetric matric, so we can add up things only over halfo the
+    % matrix, and using transpose to get the full matrix:
+    for i=1:n_elements-1
         waitbar(i/n_elements,h1);  % show progress of the correlation matrix generation
         %--------------
         skip_rows = 1;
@@ -229,49 +231,54 @@ function matrixK = correlMatrix(coordX, coordY, gamma,sparse_flag,precision_flag
         if strcmp(sparse_flag,'sparse') && rem(i, skip_rows)==0
             h2 = waitbar(0,sprintf('Progress for row %d out of %d.',i,n_elements));
         end
-        for j=1:n_elements
+        for j=i+1:n_elements
             % Plot waitbar every waitNrows:
             if strcmp(sparse_flag,'sparse') && rem(i, skip_rows)==0
                 if rem(j,n_elements/20) ==0
                     waitbar(j/n_elements,h2);
                 end
             end
-            x_i = coordX(i,1);
-            y_i = coordY(i,1);
         
-            x_j = coordX(j,1);
-            y_j = coordY(j,1);
-        
-            r_ij = sqrt( (x_i - x_j)^2 + (y_i - y_j)^2  );
-            k_ij = exp( -r_ij^2 / gamma^2 );
-            % round small numbers to zero
+            % distance between the element centorids:
+            dist_ij = norm(coordCentroids(i,:)-coordCentroids(j,:));
+            
+            %calculate the correlation matrix to be used in generating the correlated
+            %random field.  This matrix defines the correlation coefficient of the
+            %value of the material property field at every pair of element centroids.
+            K_ij = exp( -dist_ij^2 / gamma^2 );
+             
+             % round small numbers to zero
             tolerance = 1e-4;
-            if (k_ij>tolerance)
-                matrixK(i,j) = k_ij;  % filter out small correlations.
+            if (K_ij>tolerance)
+                matrixK(i,j) = K_ij;  % filter out small correlations.
             else
                 % just leave it blank, which means zero.
             end
         end
+        
         if strcmp(sparse_flag,'sparse') && rem(i, skip_rows)==0
             close(h2);
         end
     end
     close(h1); % close the waitbar
+    
+    % Add the missing other half of the matrix, and ones on the
+    % diagonal:
+    matrixK = matrixK + matrixK' + eye(n_elements);
 end
 
 
-function [coordX, coordY] = elemCoordVector(Lx,Ly,nx,ny,precision_flag)
+function [coordCentroids] = elemCoordVector(Lx,Ly,nx,ny,precision_flag)
     n_elements = nx * ny;
     deltaX = Lx / nx;  % size of element in x-direction
     deltaY = Ly / ny;  % size of element in y-direction
     
     % single precision:
     if strcmp(precision_flag,'single')
-        coordX = zeros(n_elements,1,'single'); % placeholder for the element coordinates
-        coordY = zeros(n_elements,1,'single'); % 
+        % X, Y and Z coordinates:
+        coordCentroids = zeros(n_elements,3,'single'); % placeholder for the element coordinates
     elseif strcmp(precision_flag,'double')
-        coordX = zeros(n_elements,1); % placeholder for the element coordinates
-        coordY = zeros(n_elements,1); % 
+        coordCentroids = zeros(n_elements,3); % placeholder for the element coordinates
     end
     
     %index of the element position in the grid
@@ -299,10 +306,11 @@ function [coordX, coordY] = elemCoordVector(Lx,Ly,nx,ny,precision_flag)
 
     for elem_id=1:n_elements  % march element by element:
         % as we move from element to the next element
-        coordX(elem_id,1) = deltaX/2 + (ind_gridX -1)* deltaX; % increment x-coordinate
+        % X-coord:
+        coordCentroids(elem_id,1) = deltaX/2 + (ind_gridX -1)* deltaX; % increment x-coordinate
         
-        % as we move from the row to the next row of elements
-        coordY(elem_id,:) = deltaY/2 + (ind_gridY -1)* deltaY; % increment y-coordinate
+        % Y-coord, as we move from the row to the next row of elements
+        coordCentroids(elem_id,2) = deltaY/2 + (ind_gridY -1)* deltaY; % increment y-coordinate
     
         ind_gridX = ind_gridX+1;  % increment index x as we progress
         if ind_gridX > nx  % if we exceed the number of subdivisions in x-direction
