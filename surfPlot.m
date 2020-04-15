@@ -31,6 +31,7 @@ y = surf(A,B,C);
 % Setting only x- and y- limits of the axis enables 2D top-view plot:
 axis([minX maxX minY maxY]);
 caxis([minValue maxValue]);  % Extent of values in the plot
+view(2); % is the top view of the surface
 if (length(varargin)==2)
     set(gca,'Xtick',Xticks)
     set(gca,'Ytick',Yticks)
