@@ -27,7 +27,7 @@ cd(thisPath);
 variableMEAN = 0; %mean of the random field
 variableSTD = 1.0 ;  %standard deviation of the random field
 
-gamma = 50;  %Lx/nx;  %mm, spatial correl ation length
+gamma = 150;  %Lx/nx;  %mm, spatial correl ation length
 %==========
 
 calc_correl_flag = 1;  % if 1 then the correlation matrix is computed and saved,
@@ -54,8 +54,8 @@ sparse_flag = 0; %=1 means sprase matrix is used for Cholesky decomposition
 
 Lx = 1000; %mm 
 Ly = 1000; %mm
-nx = 100;  % 250 x 250 (=62,500) elements are OK.
-ny = 100;  % 40^3 = 64,000
+nx = 50;  % 250 x 250 (=62,500) elements are OK.
+ny = 50;  % 40^3 = 64,000
 n_elements = nx * ny;
 %-------------------
 
@@ -115,7 +115,7 @@ if calc_correl_flag == 1
         % Go over the decomposition options for 'full' matrices
         if strcmp(decomposition_flag, 'cholesky')
             disp('Cholesky decomposition has started.');
-            [Btransp,chol_flag] = chol(K);
+            [Btransp,chol_flag] = chol(real(K));
             % flag = 1; % simulate situation when cholesky decomposition failed
             if ~chol_flag % If flag = 0 then the input matrix is symmetric positive definite 
                %and the factorization was successful
@@ -264,7 +264,8 @@ function matrixK = correlMatrix(coordCentroids, gamma,sparse_flag,precision_flag
     
     % Add the missing other half of the matrix, and ones on the
     % diagonal:
-    matrixK = matrixK + matrixK' + eye(n_elements);
+    TOL = 1e-06; % add small tolerance to the diagonal to improve convergence of cholesky decomposition
+    matrixK = matrixK + matrixK' + eye(n_elements)*(1+TOL);
 end
 
 
