@@ -54,8 +54,8 @@ sparse_flag = 0; %=1 means sprase matrix is used for Cholesky decomposition
 
 Lx = 1000; %mm 
 Ly = 1000; %mm
-nx = 50;  % 250 x 250 (=62,500) elements are OK.
-ny = 50;  % 40^3 = 64,000
+nx = 100;  % 250 x 250 (=62,500) elements are OK.
+ny = 100 ;  % 40^3 = 64,000
 n_elements = nx * ny;
 %-------------------
 
