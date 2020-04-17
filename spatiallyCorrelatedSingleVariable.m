@@ -178,7 +178,8 @@ end
 
 clear phi_uncorrel
 %% Generate random variable:
-variableRand = phi_correl*variableSTD + ones(n_elements,1)*variableMEAN;
+distributionType = 'normal';
+variableRand = correlRandomVector(distributionType,variableMEAN, variableSTD, B);
 min_Var = min(variableRand); max_Var = max(variableRand);
 
 %% Plot Random variable to asses its values:
@@ -205,6 +206,36 @@ save(dataFileName,'variableRand', '-v7.3');
 
 %% FUNCTIONS:
 %============
+function correlRandVector = correlRandomVector(distributionType,var1, var2, B)
+% correlRandVector = correlRandomVector(distributionType,var1, var2, B)
+%   generates vector of correlated variables, given
+%   distributionType = 'normal' or 'uniform'
+%   var1 = mean or lowerLimit,
+%   var2 = std or upperLimit (for uniform distribution),
+%   B = matrix with the correlation structure:
+
+    n_elements = size(B,1);
+
+    if strcmp(distributionType,'normal')
+        variableMEAN = var1;
+        variableSTD = var2;
+        phi_uncorrel = randn(n_elements,1); % Generate vector of uncorelated random numbers
+        %------- Normal distribution ----------------------------------------
+        phi_correl = B *phi_uncorrel;  % normal correlated verctor
+        correlRandVector = phi_correl * variableSTD + ones(n_elements,1)*variableMEAN;
+        
+    elseif strcmp(distributionType,'uniform')
+        variableLowerLIMIT = var1;
+        variableUpperLIMIT = var2;
+        phi_uncorrel = rand(n_elements,1); % Generate vector of uncorelated random numbers
+        %--- Uniformely distributed random number in the interval(0,1)-----
+        phi_correl = B *phi_uncorrel;
+        correlRandVector = phi_correl * (variableUpperLIMIT - variableLowerLIMIT) + variableLowerLIMIT;
+    end
+
+end
+
+
 
 function matrixK = correlMatrix(coordCentroids, gamma,sparse_flag,precision_flag)
     n_elements = size(coordCentroids,1);
