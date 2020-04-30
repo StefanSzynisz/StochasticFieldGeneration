@@ -28,10 +28,13 @@ set(fig, 'Name',plotName, 'NumberTitle','on', 'Visible', 'on', ...
 
 %fig.Renderer='Painters';
 y = surf(A,B,C);
+view(2); % is the top view of the surface
+set(y, 'EdgeColor', 'none');
+% y = contourf(A,B,C);
 % Setting only x- and y- limits of the axis enables 2D top-view plot:
 axis([minX maxX minY maxY]);
 caxis([minValue maxValue]);  % Extent of values in the plot
-view(2); % is the top view of the surface
+
 if (length(varargin)==2)
     set(gca,'Xtick',Xticks)
     set(gca,'Ytick',Yticks)
@@ -40,7 +43,6 @@ colormap(jet);
 if strcmp(colorBarSwitch,'colorbar_on')
     colorbar;
 end
-set(y, 'EdgeColor', 'none');
 
 hTitle = title(plotName);
 hXLabel = xlabel('X-coord [m]');

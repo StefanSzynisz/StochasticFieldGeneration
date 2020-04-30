@@ -27,7 +27,7 @@ cd(thisPath);
 variableMEAN = 0; %mean of the random field
 variableSTD = 1.0 ;  %standard deviation of the random field
 
-gamma = 150;  %Lx/nx;  %mm, spatial correl ation length
+gamma = 250;  %Lx/nx;  %mm, spatial correl ation length
 %==========
 
 calc_correl_flag = 1;  % if 1 then the correlation matrix is computed and saved,
@@ -54,8 +54,8 @@ sparse_flag = 0; %=1 means sprase matrix is used for Cholesky decomposition
 
 Lx = 1000; %mm 
 Ly = 1000; %mm
-nx = 100;  % 250 x 250 (=62,500) elements are OK.
-ny = 100 ;  % 40^3 = 64,000
+nx = 50;  % 250 x 250 (=62,500) elements are OK.
+ny = 50 ;  % 40^3 = 64,000
 n_elements = nx * ny;
 %-------------------
 
@@ -138,6 +138,7 @@ if calc_correl_flag == 1
                 % works only on double precision
             end
             clear K;  % To release memory
+            
             B = Veig * sqrt( abs(D) );
             clear Veig D; % again clear variables to release memory
             disp('Eigenvector diagonalization was succesful!'); 
