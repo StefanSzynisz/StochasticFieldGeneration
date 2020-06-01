@@ -27,7 +27,7 @@ cd(thisPath);
 variableMEAN = 0; %mean of the random field
 variableSTD = 1.0 ;  %standard deviation of the random field
 
-gamma = 250;  %Lx/nx;  %mm, spatial correl ation length
+gamma = 0.50;  %Lx/nx;  %mm, spatial correl ation length
 %==========
 
 calc_correl_flag = 1;  % if 1 then the correlation matrix is computed and saved,
@@ -37,7 +37,7 @@ infile = 'correlationMatrix';  %name of file with the variables
 % 'cholesky' is the fastest methods BUT it seems to work/succeed for
 % small correlation length(s) only, 'eigen' is second fasters, and 
 % 'svd' single value decomp (SVD) the slowest method.
-decomposition_flag = 'cholesky';  % 'cholesky','eigen','svd'
+decomposition_flag = 'eigen';  % 'cholesky','eigen','svd'
 %-------------------------------
 
 precision_flag = 'single'; %'double' or 'single
@@ -52,8 +52,8 @@ sparse_flag = 0; %=1 means sprase matrix is used for Cholesky decomposition
 
 %% Mesh and sample geometry:
 
-Lx = 1000; %mm 
-Ly = 1000; %mm
+Lx = 1; %mm 
+Ly = 1; %mm
 nx = 50;  % 250 x 250 (=62,500) elements are OK.
 ny = 50 ;  % 40^3 = 64,000
 n_elements = nx * ny;
@@ -167,9 +167,32 @@ clear Btransp
 
 %% Spatially correlated random variable:
 n_elements = nx * ny;
+
+%% This was changed by Nathalia 
 phi_uncorrel = rand(n_elements,1); % Generate vector of uncorelated random numbers
+
+%use same distribution to check decomposition
+%file_uncorrel = 'phi_uncorrel.csv';
+%phi_uncorrel = csvread(file_uncorrel,0,0);
+
+%%
 phi_correl = B *phi_uncorrel;
 timestamp = datestr(now,'HHMMSS_FFF'); % get_miliseconds to create unique realizations
+
+%% Plot Data Correlation (inserted by Nathalia)
+% ****************************************
+%******** quick test with decomposed correlation matrix 
+
+d1 = phi_correl(1:nx,1); %bottom row mesh
+d2 = phi_correl(n_elements/2-nx+1:n_elements/2,1); %middle row mesh 
+d3 = phi_correl((nx-1)*nx+1:nx*nx,1); %top row mesh
+d4 = phi_correl(nx+1:2*nx,1); %second bottom row mesh
+
+corrplot([d1 d3]) %correlation between bottom and top rows
+corrplot([d1 d2]) %correlation between bottom and middle rows
+corrplot([d1 d4]) %correlation between bottom and next rows
+
+%% 
 
 if sparse_flag ==1
     figure(2);
@@ -177,6 +200,8 @@ if sparse_flag ==1
     title('Sparsity of B');
 end
 
+%%%%%% Question from Nathalia: this code below creates another random
+%%%%%% vector?
 clear phi_uncorrel
 %% Generate random variable:
 distributionType = 'normal';
