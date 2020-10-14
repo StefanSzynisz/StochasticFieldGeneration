@@ -7,11 +7,13 @@
 % RELATED SCRIPTS:
 %     steelfoam_rand_props.m
 % Date:
-%     March-31-2020
+%     Oct-14-2020
 %  ----------------------------------------------------------------
 clearvars; close all; clc;
 [thisPath,~,~] = fileparts(matlab.desktop.editor.getActiveFilename);
 cd(thisPath);
+addpath('functions') 
+
 %% Specify key parameters for FE solver function:
 % Specify dimmensions:
 % Use consistent units in computations:
@@ -27,12 +29,12 @@ cd(thisPath);
 variableMEAN = 0; %mean of the random field
 variableSTD = 1.0 ;  %standard deviation of the random field
 
-gamma = 0.50;  %Lx/nx;  %mm, spatial correl ation length
+gamma = 250;  %mm, spatial correl ation length
 %==========
 
 calc_correl_flag = 1;  % if 1 then the correlation matrix is computed and saved,
 % if 0 then it is loaded from previuosly computed .mat variable
-infile = 'correlationMatrix';  %name of file with the variables
+infile = 'correlationMatrix_single_variable';  %name of file with the variables
 
 % 'cholesky' is the fastest methods BUT it seems to work/succeed for
 % small correlation length(s) only, 'eigen' is second fasters, and 
@@ -52,8 +54,8 @@ sparse_flag = 0; %=1 means sprase matrix is used for Cholesky decomposition
 
 %% Mesh and sample geometry:
 
-Lx = 1; %mm 
-Ly = 1; %mm
+Lx = 1000; %mm 
+Ly = 1000; %mm
 nx = 50;  % 250 x 250 (=62,500) elements are OK.
 ny = 50 ;  % 40^3 = 64,000
 n_elements = nx * ny;
@@ -175,9 +177,8 @@ phi_uncorrel = rand(n_elements,1); % Generate vector of uncorelated random numbe
 %file_uncorrel = 'phi_uncorrel.csv';
 %phi_uncorrel = csvread(file_uncorrel,0,0);
 
-%%
+%% Correlated random vector (with timestamp)
 phi_correl = B *phi_uncorrel;
-timestamp = datestr(now,'HHMMSS_FFF'); % get_miliseconds to create unique realizations
 
 %% Plot Data Correlation (inserted by Nathalia)
 % ****************************************
@@ -188,12 +189,11 @@ d2 = phi_correl(n_elements/2-nx+1:n_elements/2,1); %middle row mesh
 d3 = phi_correl((nx-1)*nx+1:nx*nx,1); %top row mesh
 d4 = phi_correl(nx+1:2*nx,1); %second bottom row mesh
 
-corrplot([d1 d3]) %correlation between bottom and top rows
-corrplot([d1 d2]) %correlation between bottom and middle rows
-corrplot([d1 d4]) %correlation between bottom and next rows
+% corrplot([d1 d3]) %correlation between bottom and top rows
+% corrplot([d1 d2]) %correlation between bottom and middle rows
+% corrplot([d1 d4]) %correlation between bottom and next rows
 
-%% 
-
+%% Plot sparcity of the matrix if sparse option was used
 if sparse_flag ==1
     figure(2);
     spy(B);  % Show the sparsity of B.
@@ -202,11 +202,14 @@ end
 
 %%%%%% Question from Nathalia: this code below creates another random
 %%%%%% vector?
+
+%%%%%% Stefan: Yes
 clear phi_uncorrel
 %% Generate random variable:
 distributionType = 'normal';
 variableRand = correlRandomVector(distributionType,variableMEAN, variableSTD, B);
 min_Var = min(variableRand); max_Var = max(variableRand);
+timestamp = datestr(now,'HHMMSS_FFF'); % get_miliseconds to create unique realizations
 
 %% Plot Random variable to asses its values:
 % ****************************************
@@ -226,7 +229,7 @@ if plot_flag == 1
 end
 
 %% Save the random variables into .mat file;
-dataFileName = strcat('data\','randomVariable_', timestamp, '.mat');
+dataFileName = strcat(saveDataPath,'randomVariable_', timestamp, '.mat');
 save(dataFileName,'variableRand', '-v7.3');
 % Version -v7.3 or higher will save your variable ( > 2GB ).
 
