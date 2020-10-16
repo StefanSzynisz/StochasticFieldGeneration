@@ -1,7 +1,6 @@
 % PURPOSE
-%     Generate stochastic, correlated variables 
-%     two variables are generated but the principle works 
-%     for any number of variables
+%     Generate stochastic, spatially correlated
+%     SINGLE variable field
 % DEPENDENCIES:
 % 
 % RELATED SCRIPTS:
@@ -32,7 +31,7 @@ variableSTD = 1.0 ;  %standard deviation of the random field
 gamma = 250;  %mm, spatial correl ation length
 %==========
 
-calc_correl_flag = 1;  % if 1 then the correlation matrix is computed and saved,
+calc_correl_flag = 0;  % if 1 then the correlation matrix is computed and saved,
 % if 0 then it is loaded from previuosly computed .mat variable
 infile = 'correlationMatrix_single_variable';  %name of file with the variables
 
@@ -93,6 +92,7 @@ if calc_correl_flag == 1
     % 2) using centroid coordinates of each element, compute the correlation 
     % matrix based on distance between each element and spatial correlation
     % parameter, gamma:
+    %
     if sparse_flag==1
         K = correlMatrix(coordCentroids, gamma,'sparse',precision_flag);  % 'sparse' matrix is generated
         figure(1);
@@ -103,7 +103,9 @@ if calc_correl_flag == 1
         disp('Correlation matrix, K was succesfully assembled.');
     end
     
-    % Eigenanalysis is the only working option for sparse matrices.
+    % 3) Decompose the correlation matrix using one of the available
+    % methods. Eigenvalue diagonalization seems to be the most efficient.
+    % 
     if sparse_flag == 1 
           
         % Eigenvalues:
@@ -156,13 +158,13 @@ if calc_correl_flag == 1
     
     end
 
-    %save correlation matrix if instructed to do so.
+    % Save correlation matrix if instructed to do so:
     save(strcat(infile,'_',decomposition_flag),'B','coordCentroids','-v7.3');
     
 elseif calc_correl_flag == 0
     %load correlation matrices from a file named infile_svd if
     %instructed to do so
-    load(strcat(infile,'_svd'));
+    load(strcat(infile,'_',decomposition_flag));
 end
 
 clear Btransp
