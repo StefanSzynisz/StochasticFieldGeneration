@@ -100,7 +100,7 @@ min_P = min(PoissonRand); max_P = max(PoissonRand);
 
 %% Save random vectors to a text file:
 % - mopen the file with write permission
-propFileName = strcat('rnd_mat_field','.txt');
+propFileName = strcat('rnd_mat_field_',timestamp,'.txt');
 fid = fopen(propFileName, 'w');  % open file identifier (handle)
 
 fprintf(fid, ' elem_id        Young      Poisson\n');
