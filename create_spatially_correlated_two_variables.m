@@ -15,11 +15,11 @@ cd(thisPath); addpath('functions')
 %% Import centroids from text file:
 elemCentrFileName='elem_centroids.txt';
 %read txt file with elemet id and centroid x y z
-struct_array = importdata(elemCentrFileName,' ',1);  %import in structure array%
+struct_array = importdata(elemCentrFileName,' ',1);                         %import in structure array%
 %================================================
-elem_centroids = struct_array.data;   %see other fields in <struct>
+elem_centroids = struct_array.data;                                         %see other fields in <struct>
 % Save matrix as binary .mat file for compatibility with Sanjay's function
-save('elem_centroids','elem_centroids');  % 'binary out', 'matrix in'
+save('elem_centroids','elem_centroids');                                    % 'binary out', 'matrix in'
 n_elements = size(elem_centroids,1);
 
 %% Statistical input:
@@ -32,19 +32,18 @@ n_elements = size(elem_centroids,1);
 % DENSITY    YOUNG's    GRAVITY   56.33 km/h = 35 mph
 % 7.83e-03  2.07e+05  9.806e-03   15.65 mm/ms
 %
-YoungMEAN = 200000; %MPa, of steel
-YoungCOV = 0.2;     % coefficient of variation
+YoungMEAN = 200000;                                                         %MPa, of steel
+YoungCOV = 0.2;                                                             % coefficient of variation
 
 PoissonMEAN = 0.3;
-PoissonCOV = 0.1;   % coefficient of variation
+PoissonCOV = 0.1;                                                           % coefficient of variation
 
-gamma = 300;    %mm, spatial correlation length
-beta = 0.5;     % varying from 0.0 to 1.0, 
-                %it is the cross correlation between the two variables
-
-nVars = 2;      %two spatial variables are generated
-precision_flag = 'single'; %'double' or 'single
-plotting_flag = 'yes' ;% 'yes' or 'no'. 
+gamma = 300;                                                                %mm, spatial correlation length
+beta = 0.5;                                                                 % varying from 0.0 to 1.0, 
+                                                                            %it is the cross correlation between the two variables
+nVars = 2;                                                                  %two spatial variables are generated
+precision_flag = 'single';                                                  %'double' or 'single
+plotting_flag = 'yes' ;                                                     % 'yes' or 'no'. 
 %plotting works only for prescribed rectangular mesh
 %===============
 
@@ -69,27 +68,27 @@ clear Kspatial Kcross;  % To release memory
 % 4) Eigenvalue diagonalization:
 %
 if strcmp(precision_flag,'single')
-    [Veig,D,~] = eig(Kglobal); % works on both single and double precision.
+    [Veig,D,~] = eig(Kglobal);                                              % works on both single and double precision.
 elseif strcmp(precision_flag,'double')
-    [Veig,D,~] = eig(Kglobal); % works on both single and double precision.
-    %[Veig,D] = eigs(Kglobal,n_elements); %numerical eigenanalysis, works only on double precision
+    [Veig,D,~] = eig(Kglobal);                                              % works on both single and double precision.
+    %[Veig,D] = eigs(Kglobal,n_elements);                                   %numerical eigenanalysis, works only on double precision
 end
-clear Kglobal;  % To release memory
+clear Kglobal;                                                              % To release memory
 
 % 5) Compute matrix with the correlation structure:
 %
 B = Veig * sqrt( abs(D) );
-clear Veig D; % again clear variables to release memory
+clear Veig D;                                                               % again clear variables to release memory
 disp('Eigenvector diagonalization was succesful!'); 
 
 %% Generate random variable:
 % 6) Use matrix B with the correlation structure and uncorrelated random
 % vectors to generate correlated random vectors.
-distributionType = 'normal';  % mean=0, std=1, 
+distributionType = 'normal';                                                % mean=0, std=1, 
 % *************************
 % or 'uniform' with limits=(-1,1)
 matrixRandVectors = correlRandVectors(distributionType, B, nVars);
-timestamp = datestr(now,'HHMMSS_FFF'); % get_miliseconds to create unique realizations
+timestamp = datestr(now,'HHMMSS_FFF');                                      % get_miliseconds to create unique realizations
 
 %% Scale normal random vectors with appropriate mean and std or limits:
 YoungRand = scaleRandVect(matrixRandVectors(:,1), distributionType, YoungMEAN, YoungCOV);
@@ -101,13 +100,13 @@ min_P = min(PoissonRand); max_P = max(PoissonRand);
 %% Save random vectors to a text file:
 % - mopen the file with write permission
 propFileName = strcat('rnd_mat_field_',timestamp,'.txt');
-fid = fopen(propFileName, 'w');  % open file identifier (handle)
+fid = fopen(propFileName, 'w');                                             % open file identifier (handle)
 
 fprintf(fid, ' elem_id        Young      Poisson\n');
 rand_data = [elem_centroids(:,1), YoungRand, PoissonRand];
-fprintf(fid, '%8d %12g %12g\n', rand_data');  % TRANSPOSE matrix
+fprintf(fid, '%8d %12g %12g\n', rand_data');                                % TRANSPOSE matrix
 
-fclose(fid);   %close file identifier
+fclose(fid);                                                                %close file identifier
 %% Plot random variables (optional):
 if strcmp(plotting_flag,'yes')
 
@@ -116,21 +115,21 @@ if strcmp(plotting_flag,'yes')
     coordY = elem_centroids(:,3);
     
     % ****************************************
-    resolution = 1.0 * elem_size;  %mm
+    resolution = 1.0 * elem_size;                                           %mm
     saveDataPath = strcat(thisPath,'\data\',timestamp,'\');
     mkdir(saveDataPath);
     %-------------------------------------
 
     % Young modulus:
     plotTitle = strcat('Young (MPa)--correl-',' ',num2str(gamma),'mm','--beta-',num2str(beta));
-    figure(1); left_pos = 3; bott_pos = 12; %cm
+    figure(1); left_pos = 3; bott_pos = 12;                                 %cm
     % Add axis option (manual tuning):
     surfPlot(coordX,coordY,YoungRand,plotTitle,'', saveDataPath,resolution,...
         left_pos,bott_pos, min_E, max_E, 'colorbar_on');
 
     % Poisson ratio:
     plotTitle = strcat('Poisson--correl-',' ',num2str(gamma),'mm','--beta-',num2str(beta));
-    figure(2); left_pos = 13; bott_pos = 12; %cm
+    figure(2); left_pos = 13; bott_pos = 12;                                %cm
     surfPlot(coordX,coordY,PoissonRand,plotTitle,'', ...
         saveDataPath,resolution,left_pos,bott_pos, min_P, max_P, 'colorbar_on');
 end
